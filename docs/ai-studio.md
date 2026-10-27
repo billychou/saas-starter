@@ -44,7 +44,7 @@ credit_transactions        # 积分流水账本（只增不改）
 
 | 文件 | 职责 |
 |---|---|
-| `bailian.ts` | DashScope 客户端：`createTextToImageTask`（POST `/api/v1/services/aigc/text2image/image-synthesis`，`X-DashScope-Async: enable`）、`fetchTaskResult`（GET `/api/v1/tasks/{id}`）。凭据优先级：**模型专属 apiKey/apiBase → 环境变量** |
+| `bailian.ts` | DashScope 客户端，按模型 id 双协议分发（均为 `X-DashScope-Async: enable` → 轮询 GET `/api/v1/tasks/{id}`）：① 旧版文生图 V2（wan2.5 及以下）POST `/api/v1/services/aigc/text2image/image-synthesis`，`input.prompt` 体，结果在 `output.results[].url`；② wan2.7 系（`/^wan2\.7\b/`）POST `/api/v1/services/aigc/image-generation/generation`，`input.messages[].content[{text}]` 体（**无 negative_prompt**），结果在 `output.choices[].message.content[].image`。Token Plan 专属 Key（`sk-sp-`）必须配专属域名（如 `https://token-plan.cn-beijing.maas.aliyuncs.com`，apiBase 填**根域名**、不带 `/compatible-mode/v1`），且 size 仅接受 `width*height` 像素格式。凭据优先级：**模型专属 apiKey/apiBase → 环境变量** |
 | `credits.ts` | `deductCredits`/`addCredits`：事务 + `SELECT ... FOR UPDATE` 行锁，杜绝并发超扣；余额不足抛 `InsufficientCreditsError`。含 `CREDIT_PACKS`（$9/500、$24/1500、$69/5000）、`SIGNUP_BONUS_CREDITS`（env 可覆盖，默认 100） |
 | `generations.ts` | 编排层：`createGeneration`（校验→插入→扣分→提交任务；提交失败即退款+标记 failed）、`syncGeneration`（轮询任务；成功则**下载图片到 `public/generated/`** 落盘——远端 URL 约 24h 过期；失败则退还积分）、`listTeamGenerations`、`deleteGeneration`（删本地文件；先把流水的 generationId 置空保账本，再级联删图） |
 | `lib/auth/admin.ts` | `isAdminUser`：邮箱 ∈ `ADMIN_EMAILS`（逗号分隔） |
