@@ -1,0 +1,361 @@
+{
+  "Metadata": {
+    "brand": "ACME",
+    "title": "ACME — Ship Your SaaS Faster Than Ever",
+    "description": "The agent-ready SaaS framework with built-in auth, payments, subscriptions, team management and more. Ship your product in hours, not months."
+  },
+  "Header": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "studio": "Studio",
+    "gallery": "Gallery",
+    "admin": "Admin",
+    "signIn": "Sign in",
+    "getStarted": "Get Started",
+    "dashboard": "Dashboard",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "switchLanguage": "Switch language"
+  },
+  "Footer": {
+    "tagline": "The SaaS starter framework with built-in auth, payments, subscriptions and team management. Ship your product in hours.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "dashboard": "Dashboard",
+    "docs": "Documentation",
+    "github": "GitHub",
+    "vercelTemplate": "Vercel Template",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "rights": "© {year} ACME, Inc. All rights reserved.",
+    "builtWith": "Built with <brand>Next.js</brand>, <brand>Stripe</brand> & <brand>Drizzle</brand>"
+  },
+  "Home": {
+    "hero": {
+      "badge": "Ship Your SaaS in One Hour",
+      "title": "Build and ship your SaaS <gradient>faster than ever</gradient>",
+      "subtitle": "The starter framework with built-in authentication, payments, subscriptions, team management and activity logging — nearly everything a SaaS needs, so you can focus on your product.",
+      "ctaPrimary": "Get Started Free",
+      "ctaSecondary": "View on GitHub"
+    },
+    "logos": {
+      "title": "Built on the modern web stack you already know"
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Nearly everything your SaaS needs, built in",
+      "subtitle": "Stop rewriting the same auth, billing, and team logic for every project. Start from a foundation that already works.",
+      "items": [
+        {
+          "number": "01",
+          "title": "Authentication & Sessions",
+          "description": "Email/password auth with JWT cookies, bcrypt hashing, protected routes via global middleware, and automatic session refresh — no third-party auth vendor required."
+        },
+        {
+          "number": "02",
+          "title": "Payments & Subscriptions",
+          "description": "Stripe Checkout, Customer Portal, and webhook handling that keeps subscription state in sync with your database. Start charging from day one."
+        },
+        {
+          "number": "03",
+          "title": "Teams & RBAC",
+          "description": "Multi-user teams with Owner and Member roles, invitations, and member management UI ready to extend for your own permission model."
+        },
+        {
+          "number": "04",
+          "title": "Postgres & Drizzle ORM",
+          "description": "Type-safe schema, generated migrations, seeding, and a query layer that keeps database logic out of your routes and actions."
+        },
+        {
+          "number": "05",
+          "title": "Activity Logging",
+          "description": "An audit trail for every meaningful user event — sign-ins, invites, setting changes — surfaced in a timeline on the dashboard."
+        },
+        {
+          "number": "06",
+          "title": "Marketing & Dashboard UI",
+          "description": "Landing page, pricing page, auth screens, and a settings dashboard built with shadcn/ui and Tailwind CSS v4, with light and dark themes."
+        }
+      ]
+    },
+    "stats": {
+      "items": [
+        { "value": "10x", "label": "Faster to launch" },
+        { "value": "100%", "label": "Type-safe stack" },
+        { "value": "6+", "label": "Built-in integrations" },
+        { "value": "0", "label": "Boilerplate to write" }
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "Testimonials",
+      "title": "Loved by builders shipping fast",
+      "items": [
+        {
+          "quote": "The clean code architecture and great taste in design saved us weeks. We went from clone to charging customers in a single weekend.",
+          "name": "Sarah Chen",
+          "title": "Founder, Launchpad AI"
+        },
+        {
+          "quote": "Auth, Stripe, teams, and an audit log — all wired up correctly. This is exactly the boilerplate I kept rewriting for every side project.",
+          "name": "Marcus Rodriguez",
+          "title": "Indie Hacker"
+        },
+        {
+          "quote": "We shipped our MVP in hours instead of months. The Drizzle + Server Actions patterns are idiomatic and easy to extend.",
+          "name": "Aiko Tanaka",
+          "title": "CTO, Nimbus Labs"
+        }
+      ]
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "question": "What is included in this SaaS starter?",
+          "answer": "Authentication with email/password, Stripe payments and subscriptions, multi-team support with role-based access control, a settings dashboard, activity logging, and complete marketing pages — everything you need to launch a subscription product."
+        },
+        {
+          "question": "Do I need a Stripe account to use it?",
+          "answer": "Yes, for payment features. The included setup script walks you through creating Stripe products and prices locally, and the Stripe CLI forwards webhooks to your dev server so subscription events work end-to-end before you deploy."
+        },
+        {
+          "question": "Which database do I need?",
+          "answer": "Any Postgres instance. The setup script can create a local database for you, and in production you can point POSTGRES_URL at Neon, Supabase, RDS, or any other managed Postgres."
+        },
+        {
+          "question": "Can I customize the theme and branding?",
+          "answer": "Absolutely. All colors are CSS-variable design tokens, so switching the brand palette is a one-file change. Light and dark modes are built in, and the UI is composed of shadcn/ui components you fully own."
+        },
+        {
+          "question": "Is it free to use for commercial projects?",
+          "answer": "Yes. The starter is MIT licensed — use it for as many commercial products as you like, with no attribution required."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to ship your SaaS?",
+      "subtitle": "Don''t waste time on boilerplate. Clone the starter, run the setup script, and launch your product today.",
+      "primary": "Get Started Free",
+      "secondary": "View Pricing"
+    }
+  },
+  "Pricing": {
+    "badge": "Pricing",
+    "title": "Simple, transparent <gradient>pricing</gradient>",
+    "subtitle": "Start free with a {trialDays}-day trial. No hidden fees, cancel anytime.",
+    "trialNote": "with {trialDays} day free trial",
+    "perUser": "per user / {interval}",
+    "intervalMonth": "month",
+    "intervalYear": "year",
+    "mostPopular": "Most Popular",
+    "getStarted": "Get Started",
+    "loading": "Loading...",
+    "footnote": "All plans include authentication, team management, and activity logging out of the box.",
+    "baseFeatures": [
+      "Unlimited usage",
+      "Unlimited workspace members",
+      "Email support"
+    ],
+    "plusFeatures": [
+      "Everything in Base, and:",
+      "Early access to new features",
+      "24/7 support + Slack access"
+    ]
+  },
+  "Login": {
+    "signInTitle": "Sign in to your account",
+    "signUpTitle": "Create your account",
+    "signInSubtitle": "Welcome back — pick up where you left off.",
+    "signUpSubtitle": "Start shipping your SaaS in minutes.",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter your password",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "loading": "Loading...",
+    "newHere": "New to our platform?",
+    "haveAccount": "Already have an account?",
+    "createAccount": "Create an account",
+    "signInExisting": "Sign in to existing account"
+  },
+  "DashboardNav": {
+    "settings": "Settings",
+    "team": "Team",
+    "general": "General",
+    "activity": "Activity",
+    "security": "Security"
+  },
+  "Team": {
+    "title": "Team Settings",
+    "subscription": "Team Subscription",
+    "currentPlan": "Current Plan: {plan}",
+    "free": "Free",
+    "billedMonthly": "Billed monthly",
+    "trialPeriod": "Trial period",
+    "noSubscription": "No active subscription",
+    "manage": "Manage Subscription",
+    "members": "Team Members",
+    "noMembers": "No team members yet.",
+    "unknownUser": "Unknown User",
+    "remove": "Remove",
+    "removing": "Removing...",
+    "inviteTitle": "Invite Team Member",
+    "inviteEmail": "Email",
+    "inviteEmailPlaceholder": "Enter email",
+    "role": "Role",
+    "member": "Member",
+    "owner": "Owner",
+    "inviteButton": "Invite Member",
+    "inviting": "Inviting...",
+    "ownerOnly": "You must be a team owner to invite new members."
+  },
+  "General": {
+    "title": "General Settings",
+    "accountInfo": "Account Information",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "saving": "Saving...",
+    "save": "Save Changes"
+  },
+  "Security": {
+    "title": "Security Settings",
+    "password": "Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updating": "Updating...",
+    "updatePassword": "Update Password",
+    "deleteAccount": "Delete Account",
+    "deleteWarning": "Account deletion is non-reversable. Please proceed with caution.",
+    "confirmPassword": "Confirm Password",
+    "deleting": "Deleting..."
+  },
+  "Activity": {
+    "title": "Activity Log",
+    "recent": "Recent Activity",
+    "noTitle": "No activity yet",
+    "noBody": "When you perform actions like signing in or updating your account, they''ll appear here.",
+    "fromIp": " from IP {ip}",
+    "justNow": "just now",
+    "minutesAgo": "{count, plural, one {# minute ago} other {# minutes ago}}",
+    "hoursAgo": "{count, plural, one {# hour ago} other {# hours ago}}",
+    "daysAgo": "{count, plural, one {# day ago} other {# days ago}}",
+    "actions": {
+      "SIGN_UP": "You signed up",
+      "SIGN_IN": "You signed in",
+      "SIGN_OUT": "You signed out",
+      "UPDATE_PASSWORD": "You changed your password",
+      "DELETE_ACCOUNT": "You deleted your account",
+      "UPDATE_ACCOUNT": "You updated your account",
+      "CREATE_TEAM": "You created a new team",
+      "REMOVE_TEAM_MEMBER": "You removed a team member",
+      "INVITE_TEAM_MEMBER": "You invited a team member",
+      "ACCEPT_INVITATION": "You accepted an invitation",
+      "IMAGE_GENERATED": "You submitted an image generation",
+      "UNKNOWN": "Unknown action occurred"
+    }
+  },
+  "Studio": {
+    "title": "AI Studio",
+    "creditsAvailable": "credits",
+    "model": "Model",
+    "selectModel": "Select a model",
+    "perImage": "{count, plural, one {# credit/image} other {# credits/image}}",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe the image you want to create...",
+    "negativePrompt": "Negative prompt",
+    "negativePromptPlaceholder": "What to avoid in the image (optional)",
+    "size": "Size",
+    "imageCount": "Images",
+    "estimatedCost": "Estimated cost",
+    "creditsUnit": "credits",
+    "insufficientCredits": "Not enough credits: this generation costs {required}, you have {available}.",
+    "insufficientHint": "Not enough credits for this generation. Buy a credit pack to continue.",
+    "generate": "Generate",
+    "generating": "Submitting...",
+    "generateFailed": "Generation failed. Please try again.",
+    "yourGenerations": "Your generations",
+    "emptyFeed": "No generations yet — describe an image and hit Generate.",
+    "noModels": "No AI models are configured yet. An administrator needs to add models first.",
+    "statusPending": "Queued",
+    "statusRunning": "Generating",
+    "statusSucceeded": "Completed",
+    "statusFailed": "Failed",
+    "creditsUsed": "{count, plural, one {# credit} other {# credits}}",
+    "regenerate": "Regenerate",
+    "delete": "Delete"
+  },
+  "Credits": {
+    "buyCredits": "Buy credits",
+    "buyTitle": "Buy a credit pack",
+    "buyDescription": "Credits are shared across your team and never expire.",
+    "packCredits": "{count, plural, one {# credit} other {# credits}}",
+    "packPrice": "One-time payment · ${price} USD",
+    "purchase": "Buy",
+    "checkoutNote": "You will be redirected to Stripe Checkout. Credits are added automatically after payment."
+  },
+  "Gallery": {
+    "title": "Team Gallery",
+    "subtitle": "All images generated by your team.",
+    "teamCredits": "team credits",
+    "scopeAll": "All",
+    "scopeMine": "Mine",
+    "empty": "No images here yet.",
+    "goToStudio": "Open Studio",
+    "download": "Download",
+    "remix": "Remix in Studio",
+    "delete": "Delete"
+  },
+  "Admin": {
+    "modelsTitle": "AI Model Management",
+    "modelsSubtitle": "Configure the image generation models available to all teams.",
+    "addModel": "Add model",
+    "editModel": "Edit model",
+    "deleteModel": "Delete model",
+    "modelFormHint": "Models are served through Alibaba Cloud Bailian (DashScope) by default. A per-model API key is optional; otherwise DASHSCOPE_API_KEY is used.",
+    "fieldName": "Display name",
+    "fieldProvider": "Provider",
+    "fieldModelId": "Model ID",
+    "fieldApiKey": "API key override",
+    "apiKeyStored": "A custom key is stored — leave blank to keep it",
+    "apiKeyEnvFallback": "Blank = use DASHSCOPE_API_KEY",
+    "clearApiKey": "Remove the stored custom key",
+    "fieldApiBase": "API base URL override",
+    "fieldSizes": "Sizes (comma-separated)",
+    "fieldCreditCost": "Credits / image",
+    "fieldMaxImages": "Max images",
+    "fieldSortOrder": "Sort order",
+    "fieldDescription": "Description",
+    "fieldEnabled": "Enabled",
+    "fieldIsDefault": "Default model",
+    "status": "Status",
+    "actions": "Actions",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "customKey": "custom key",
+    "maxImagesValue": "max {count}",
+    "sortOrderValue": "sort {order}",
+    "noModelsYet": "No models yet. Add your first model to enable the Studio.",
+    "deleteModelTitle": "Delete model",
+    "deleteModelConfirm": "Delete \"{name}\"? Existing generations keep their history, but the model will no longer be selectable.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "body": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "backHome": "Back to Home"
+  }
+}

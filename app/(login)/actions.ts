@@ -14,8 +14,10 @@ import {
   type NewTeamMember,
   type NewActivityLog,
   ActivityType,
-  invitations
+  invitations,
+  creditTransactions
 } from '@/lib/db/schema';
+import { SIGNUP_BONUS_CREDITS } from '@/lib/ai/credits';
 import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -181,7 +183,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   } else {
     // Create a new team if there's no invitation
     const newTeam: NewTeam = {
-      name: `${email}'s Team`
+      name: `${email}'s Team`,
+      creditBalance: SIGNUP_BONUS_CREDITS
     };
 
     [createdTeam] = await db.insert(teams).values(newTeam).returning();
@@ -196,6 +199,13 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 
     teamId = createdTeam.id;
     userRole = 'owner';
+
+    await db.insert(creditTransactions).values({
+      teamId,
+      userId: createdUser.id,
+      amount: SIGNUP_BONUS_CREDITS,
+      reason: 'signup_bonus'
+    });
 
     await logActivity(teamId, createdUser.id, ActivityType.CREATE_TEAM);
   }

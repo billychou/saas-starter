@@ -1,6 +1,9 @@
 import Stripe from 'stripe';
+import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { Team } from '@/lib/db/schema';
+import { creditTransactions, Team, User } from '@/lib/db/schema';
+import { db } from '@/lib/db/drizzle';
+import { addCredits, type CreditPack } from '@/lib/ai/credits';
 import {
   getTeamByStripeCustomerId,
   getUser,
@@ -44,6 +47,82 @@ export async function createCheckoutSession({
   });
 
   redirect(session.url!);
+}
+
+export async function createCreditPackCheckoutSession({
+  team,
+  user,
+  pack
+}: {
+  team: Team;
+  user: User;
+  pack: CreditPack;
+}) {
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `${pack.credits} AI Credits`,
+            description: 'One-time credit pack for AI image generation'
+          },
+          unit_amount: pack.amountUsd * 100
+        },
+        quantity: 1
+      }
+    ],
+    metadata: {
+      type: 'credit_pack',
+      pack_id: pack.id,
+      credits: String(pack.credits),
+      team_id: String(team.id)
+    },
+    client_reference_id: user.id.toString(),
+    customer: team.stripeCustomerId || undefined,
+    success_url: `${process.env.BASE_URL}/studio?credits=success`,
+    cancel_url: `${process.env.BASE_URL}/studio`
+  });
+
+  redirect(session.url!);
+}
+
+/**
+ * Webhook handler for one-time credit pack purchases.
+ * Idempotent: skips if a transaction with this Stripe session already exists.
+ */
+export async function handleCreditPackCheckout(
+  session: Stripe.Checkout.Session
+) {
+  const metadata = session.metadata;
+  if (metadata?.type !== 'credit_pack') return;
+  if (session.payment_status !== 'paid') return;
+
+  const teamId = Number(metadata.team_id);
+  const credits = Number(metadata.credits);
+  if (!teamId || !credits || credits <= 0) {
+    console.error('Invalid credit pack metadata:', metadata);
+    return;
+  }
+
+  const existing = await db
+    .select({ id: creditTransactions.id })
+    .from(creditTransactions)
+    .where(eq(creditTransactions.stripeSessionId, session.id))
+    .limit(1);
+  if (existing.length > 0) return;
+
+  await addCredits({
+    teamId,
+    userId: session.client_reference_id
+      ? Number(session.client_reference_id)
+      : null,
+    amount: credits,
+    reason: 'purchase',
+    stripeSessionId: session.id
+  });
 }
 
 export async function createCustomerPortalSession(team: Team) {

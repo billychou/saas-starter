@@ -1,7 +1,59 @@
 import { stripe } from '../payments/stripe';
 import { db } from './drizzle';
-import { users, teams, teamMembers } from './schema';
+import {
+  users,
+  teams,
+  teamMembers,
+  aiModels,
+  creditTransactions,
+} from './schema';
 import { hashPassword } from '@/lib/auth/session';
+import { SIGNUP_BONUS_CREDITS } from '@/lib/ai/credits';
+
+async function seedAiModels() {
+  console.log('Creating default AI models...');
+
+  await db.insert(aiModels).values([
+    {
+      name: 'Wanx 2.1 Turbo',
+      provider: 'bailian',
+      modelId: 'wanx2.1-t2i-turbo',
+      sizes: ['1024*1024', '720*1280', '1280*720'],
+      maxImages: 4,
+      creditCost: 1,
+      enabled: true,
+      isDefault: true,
+      description: 'Fast text-to-image generation via Alibaba Cloud Bailian.',
+      sortOrder: 0,
+    },
+    {
+      name: 'Wanx 2.1 Plus',
+      provider: 'bailian',
+      modelId: 'wanx2.1-t2i-plus',
+      sizes: ['1024*1024', '720*1280', '1280*720'],
+      maxImages: 4,
+      creditCost: 4,
+      enabled: true,
+      isDefault: false,
+      description: 'Higher-quality text-to-image generation, slower than Turbo.',
+      sortOrder: 1,
+    },
+    {
+      name: 'FLUX.1 Schnell',
+      provider: 'bailian',
+      modelId: 'flux-schnell',
+      sizes: ['1024*1024', '768*1344', '1344*768', '864*1152', '1152*864'],
+      maxImages: 4,
+      creditCost: 2,
+      enabled: true,
+      isDefault: false,
+      description: 'Black Forest Labs FLUX.1 schnell hosted on Bailian.',
+      sortOrder: 2,
+    },
+  ]);
+
+  console.log('Default AI models created.');
+}
 
 async function createStripeProducts() {
   console.log('Creating Stripe products and prices...');
@@ -61,6 +113,7 @@ async function seed() {
     .insert(teams)
     .values({
       name: 'Test Team',
+      creditBalance: SIGNUP_BONUS_CREDITS,
     })
     .returning();
 
@@ -70,6 +123,14 @@ async function seed() {
     role: 'owner',
   });
 
+  await db.insert(creditTransactions).values({
+    teamId: team.id,
+    userId: user.id,
+    amount: SIGNUP_BONUS_CREDITS,
+    reason: 'signup_bonus',
+  });
+
+  await seedAiModels();
   await createStripeProducts();
 }
 
