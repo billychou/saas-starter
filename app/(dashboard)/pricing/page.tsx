@@ -1,15 +1,18 @@
 import { checkoutAction } from '@/lib/payments/actions';
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
+import { Badge } from '@/components/ui/badge';
 import { SubmitButton } from './submit-button';
 
 // Prices are fresh for one hour max
 export const revalidate = 3600;
 
 export default async function PricingPage() {
+  const t = await getTranslations('Pricing');
   const [prices, products] = await Promise.all([
     getStripePrices(),
-    getStripeProducts(),
+    getStripeProducts()
   ]);
 
   const basePlan = products.find((product) => product.name === 'Base');
@@ -19,44 +22,62 @@ export default async function PricingPage() {
   const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
+    <main className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <Badge
+          variant="outline"
+          className="border-brand/30 bg-brand/5 text-brand rounded-full px-4 py-1 text-xs font-medium"
+        >
+          <Sparkles className="size-3.5" />
+          {t('badge')}
+        </Badge>
+        <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-balance sm:text-5xl">
+          {t.rich('title', {
+            gradient: (chunks) => <span className="text-gradient">{chunks}</span>
+          })}
+        </h1>
+        <p className="text-muted-foreground mt-4 text-lg">
+          {t('subtitle', {
+            trialDays: basePrice?.trialPeriodDays || 7
+          })}
+        </p>
+      </div>
+
+      <div className="mx-auto mt-16 grid max-w-3xl gap-8 md:grid-cols-2">
         <PricingCard
           name={basePlan?.name || 'Base'}
           price={basePrice?.unitAmount || 800}
           interval={basePrice?.interval || 'month'}
           trialDays={basePrice?.trialPeriodDays || 7}
-          features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
-            'Email Support',
-          ]}
+          features={t.raw('baseFeatures') as string[]}
           priceId={basePrice?.id}
         />
         <PricingCard
+          highlighted
           name={plusPlan?.name || 'Plus'}
           price={plusPrice?.unitAmount || 1200}
           interval={plusPrice?.interval || 'month'}
           trialDays={plusPrice?.trialPeriodDays || 7}
-          features={[
-            'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
-          ]}
+          features={t.raw('plusFeatures') as string[]}
           priceId={plusPrice?.id}
         />
       </div>
+
+      <p className="text-muted-foreground mt-12 text-center text-sm">
+        {t('footnote')}
+      </p>
     </main>
   );
 }
 
-function PricingCard({
+async function PricingCard({
   name,
   price,
   interval,
   trialDays,
   features,
   priceId,
+  highlighted = false
 }: {
   name: string;
   price: number;
@@ -64,30 +85,49 @@ function PricingCard({
   trialDays: number;
   features: string[];
   priceId?: string;
+  highlighted?: boolean;
 }) {
+  const t = await getTranslations('Pricing');
+
   return (
-    <div className="pt-6">
-      <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day free trial
+    <div
+      className={`bg-card relative flex flex-col rounded-2xl border p-8 ${
+        highlighted
+          ? 'border-brand/60 shadow-xl shadow-brand/10'
+          : 'border-border'
+      }`}
+    >
+      {highlighted && (
+        <span className="bg-brand-gradient absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-semibold whitespace-nowrap text-white">
+          {t('mostPopular')}
+        </span>
+      )}
+      <h2 className="text-lg font-semibold">{name}</h2>
+      <p className="text-muted-foreground mt-1 text-sm">
+        {t('trialNote', { trialDays })}
       </p>
-      <p className="text-4xl font-medium text-gray-900 mb-6">
-        ${price / 100}{' '}
-        <span className="text-xl font-normal text-gray-600">
-          per user / {interval}
+      <p className="mt-6 text-5xl font-extrabold tracking-tight">
+        ${price / 100}
+        <span className="text-muted-foreground ml-2 text-base font-normal">
+          {t('perUser', {
+            interval:
+              interval === 'year' ? t('intervalYear') : t('intervalMonth')
+          })}
         </span>
       </p>
-      <ul className="space-y-4 mb-8">
+      <ul className="mt-8 flex-1 space-y-3.5">
         {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <Check className="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-            <span className="text-gray-700">{feature}</span>
+          <li key={index} className="flex items-start text-sm">
+            <span className="bg-brand/10 text-brand mr-3 mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full">
+              <Check className="size-3" />
+            </span>
+            {feature}
           </li>
         ))}
       </ul>
-      <form action={checkoutAction}>
+      <form action={checkoutAction} className="mt-8">
         <input type="hidden" name="priceId" value={priceId} />
-        <SubmitButton />
+        <SubmitButton highlighted={highlighted} />
       </form>
     </div>
   );
