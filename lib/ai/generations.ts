@@ -1,5 +1,3 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
@@ -16,8 +14,7 @@ import {
 } from '@/lib/db/schema';
 import { createTextToImageTask, fetchTaskResult } from './bailian';
 import { addCredits, deductCredits } from './credits';
-
-const GENERATED_DIR = path.join(process.cwd(), 'public', 'generated');
+import { deleteStoredImage, storeImage } from './storage';
 
 export interface GenerationWithDetails extends Generation {
   images: GenerationImage[];
@@ -44,23 +41,6 @@ export class GenerationValidationError extends Error {
 
 function modelCredentials(model: Pick<AiModel, 'apiKey' | 'apiBase'>) {
   return { apiKey: model.apiKey ?? '', apiBase: model.apiBase };
-}
-
-async function downloadImage(generationId: number, index: number, url: string): Promise<string> {
-  await fs.mkdir(GENERATED_DIR, { recursive: true });
-  let ext = 'png';
-  const match = url.split('?')[0].match(/\.(\w+)$/);
-  if (match && ['png', 'jpg', 'jpeg', 'webp'].includes(match[1].toLowerCase())) {
-    ext = match[1].toLowerCase();
-  }
-  const fileName = `gen-${generationId}-${index}.${ext}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to download image: HTTP ${res.status}`);
-  }
-  const buffer = Buffer.from(await res.arrayBuffer());
-  await fs.writeFile(path.join(GENERATED_DIR, fileName), buffer);
-  return `/generated/${fileName}`;
 }
 
 export async function getEnabledModels(): Promise<AiModel[]> {
@@ -155,7 +135,8 @@ export async function createGeneration(input: CreateGenerationInput) {
 
 /**
  * Poll the provider for an unfinished generation and persist the outcome:
- * download images to public/generated on success, refund credits on failure.
+ * persist images to OSS (or public/generated locally when OSS is unconfigured)
+ * on success, refund credits on failure.
  */
 export async function syncGeneration(generation: Generation): Promise<Generation> {
   if (generation.status !== 'pending' && generation.status !== 'running') {
@@ -186,9 +167,9 @@ export async function syncGeneration(generation: Generation): Promise<Generation
       const url = result.urls[i];
       let localPath: string | null = null;
       try {
-        localPath = await downloadImage(generation.id, i, url);
+        localPath = await storeImage(generation.id, i, url);
       } catch (error) {
-        console.error(`Failed to download image for generation ${generation.id}:`, error);
+        console.error(`Failed to store image for generation ${generation.id}:`, error);
       }
       images.push({ generationId: generation.id, url, localPath });
     }
@@ -314,8 +295,7 @@ export async function deleteGeneration(generation: Generation): Promise<void> {
 
   for (const image of images) {
     if (image.localPath) {
-      const filePath = path.join(process.cwd(), 'public', image.localPath);
-      await fs.unlink(filePath).catch(() => {});
+      await deleteStoredImage(image.localPath);
     }
   }
 

@@ -32,7 +32,7 @@ generations                # 一次生成任务（模型名称/ID 做了快照�
   taskRef(DashScope task_id) / creditsUsed / error
 
 generation_images          # 成功产物；onDelete cascade
-  generationId / url(远端，~24h 过期) / localPath(/generated/*.png)
+  generationId / url(远端，~24h 过期) / localPath(OSS 完整 URL，或旧数据的 /generated/*.png)
 
 credit_transactions        # 积分流水账本（只增不改）
   teamId / userId / amount(带符号) / generationId(可空)
@@ -46,7 +46,8 @@ credit_transactions        # 积分流水账本（只增不改）
 |---|---|
 | `bailian.ts` | DashScope 客户端，按模型 id 双协议分发（均为 `X-DashScope-Async: enable` → 轮询 GET `/api/v1/tasks/{id}`）：① 旧版文生图 V2（wan2.5 及以下）POST `/api/v1/services/aigc/text2image/image-synthesis`，`input.prompt` 体，结果在 `output.results[].url`；② wan2.7 系（`/^wan2\.7\b/`）POST `/api/v1/services/aigc/image-generation/generation`，`input.messages[].content[{text}]` 体（**无 negative_prompt**），结果在 `output.choices[].message.content[].image`。Token Plan 专属 Key（`sk-sp-`）必须配专属域名（如 `https://token-plan.cn-beijing.maas.aliyuncs.com`，apiBase 填**根域名**、不带 `/compatible-mode/v1`），且 size 仅接受 `width*height` 像素格式。凭据优先级：**模型专属 apiKey/apiBase → 环境变量** |
 | `credits.ts` | `deductCredits`/`addCredits`：事务 + `SELECT ... FOR UPDATE` 行锁，杜绝并发超扣；余额不足抛 `InsufficientCreditsError`。含 `CREDIT_PACKS`（$9/500、$24/1500、$69/5000）、`SIGNUP_BONUS_CREDITS`（env 可覆盖，默认 100） |
-| `generations.ts` | 编排层：`createGeneration`（校验→插入→扣分→提交任务；提交失败即退款+标记 failed）、`syncGeneration`（轮询任务；成功则**下载图片到 `public/generated/`** 落盘——远端 URL 约 24h 过期；失败则退还积分）、`listTeamGenerations`、`deleteGeneration`（删本地文件；先把流水的 generationId 置空保账本，再级联删图） |
+| `generations.ts` | 编排层：`createGeneration`（校验→插入→扣分→提交任务；提交失败即退款+标记 failed）、`syncGeneration`（轮询任务；成功则**经 `storage.ts` 持久化图片**——远端 URL 约 24h 过期；失败则退还积分）、`listTeamGenerations`、`deleteGeneration`（删 OSS 对象或本地文件；先把流水的 generationId 置空保账本，再级联删图） |
+| `storage.ts` | 图片存储适配层：`storeImage`（下载远端图 → 配置了 OSS 则上传并返回完整公共 URL，否则落盘 `public/generated/` 返回相对路径）、`deleteStoredImage`（按 `localPath` 值分支：http 开头删 OSS 对象、否则删本地文件；尽力而为不抛错）、`isOssConfigured`。详见 §8 |
 | `lib/auth/admin.ts` | `isAdminUser`：邮箱 ∈ `ADMIN_EMAILS`（逗号分隔） |
 
 ## 4. API 路由
@@ -86,12 +87,22 @@ DASHSCOPE_API_KEY=sk-xxx            # 必填：百炼 API Key（bailian.console.
 DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com   # 可选，国际站用 dashscope-intl.aliyuncs.com
 ADMIN_EMAILS=you@example.com,admin2@example.com     # 平台管理员邮箱（逗号分隔）
 SIGNUP_BONUS_CREDITS=100            # 可选：新团队注册赠送积分（默认 100）
+OSS_REGION=oss-cn-hangzhou          # 可选：OSS 图片存储（四项全配才启用，全不配回退本地）
+OSS_BUCKET=your-bucket-name
+OSS_ACCESS_KEY_ID=LTAI***
+OSS_ACCESS_KEY_SECRET=***
+OSS_PUBLIC_BASE_URL=https://cdn.example.com         # 可选：自定义/CDN 域名（默认 https://{bucket}.{region}.aliyuncs.com）
 ```
 
-## 8. 图片存储
+## 8. 图片存储（`lib/ai/storage.ts`）
 
-- 生成成功后立即把远端 URL（~24h 过期）下载到 `public/generated/gen-{id}-{i}.{ext}`，前端优先使用 `localPath`，`url` 仅作兜底
-- `/public/generated` 已加入 `.gitignore`；**生产部署（Vercel 等无状态文件系统）需将 `downloadImage` 改为上传 OSS/S3/R2**，只需替换 `lib/ai/generations.ts` 中这一个函数
+- 生成成功后立即把远端 URL（~24h 过期）下载为 Buffer 并持久化，前端优先使用 `localPath`，`url` 仅作兜底。两种模式：
+  - **OSS 模式**（`OSS_REGION`/`OSS_BUCKET`/`OSS_ACCESS_KEY_ID`/`OSS_ACCESS_KEY_SECRET` 四项全配）：上传到 key `ai-studio/generated/{generationId}/{uuid}.{ext}`，`localPath` 存完整公共 URL（默认 `https://{bucket}.{region}.aliyuncs.com/{key}`，可用 `OSS_PUBLIC_BASE_URL` 覆盖为 CDN 域名）。bucket 需 **public-read**；UUID 文件名是不可枚举的安全边界。建议 RAM 子账号权限收窄到 `oss:PutObject`/`oss:DeleteObject` on `{bucket}/ai-studio/generated/*`
+  - **本地回退**（四项全不配，适合本地开发）：写 `public/generated/gen-{id}-{i}.{ext}`，`localPath` 存 `/generated/...` 相对路径；`/public/generated` 已加入 `.gitignore`。**只配一部分会抛错**（防止生产环境静默回退导致图片 24h 后失效）
+- OSS 客户端为懒加载单例（首次调用才初始化）；`ali-oss` 已加入 `next.config.ts` 的 `serverExternalPackages`
+- 删除 generation 时 `deleteStoredImage` 按 `localPath` 值分支：`http` 开头 → 校验 origin 与配置域名一致后删 OSS 对象；否则删本地文件（兼容旧数据）。均尽力而为、不阻断 DB 清理
+- 旧数据不迁移：历史 `/generated/...` 行与 OSS URL 行并存，客户端 `localPath ?? url` 渲染天然兼容（全站为原生 `<img>`，无 `next/image`，OSS 绝对 URL 零配置可显示）
+- 注意：sync 发生在请求处理内（`GET /api/ai/generations`），OSS 上传会增加该请求耗时（与原本地写盘同量级，大头仍是下载远端图）
 
 ## 9. 验证记录
 
@@ -109,4 +120,4 @@ SIGNUP_BONUS_CREDITS=100            # 可选：新团队注册赠送积分（默
 2. 生成队列持久化（当前轮询发生在请求内；高并发可改为后台任务 + Webhook 回调 `X-DashScope-Async` 任务完成事件）
 3. 积分流水页面（当前流水只入库未展示）；`admin_adjust` 预留了管理员调账
 4. 模型管理支持更多 provider（当前 `provider` 字段已预留，bailian 之外的接入需在 `lib/ai/` 增加对应 client）
-5. 对象存储适配器（见 §8）
+5. ~~对象存储适配器~~ ✅ 已完成（阿里云 OSS，见 §8）；如需 S3/R2 可在 `lib/ai/storage.ts` 同一接缝扩展

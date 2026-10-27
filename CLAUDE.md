@@ -22,7 +22,7 @@ There is no test suite or linter configured.
 
 Local Stripe webhook testing requires the Stripe CLI: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 
-Env lives in `.env` (not `.env.local`) — see `.env.example` for format. Key vars: `POSTGRES_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BASE_URL`, `AUTH_SECRET`, `DASHSCOPE_API_KEY` (Bailian AI), `ADMIN_EMAILS` (comma-separated platform admins for `/admin/models`), `SIGNUP_BONUS_CREDITS`.
+Env lives in `.env` (not `.env.local`) — see `.env.example` for format. Key vars: `POSTGRES_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BASE_URL`, `AUTH_SECRET`, `DASHSCOPE_API_KEY` (Bailian AI), `ADMIN_EMAILS` (comma-separated platform admins for `/admin/models`), `SIGNUP_BONUS_CREDITS`, `OSS_REGION`/`OSS_BUCKET`/`OSS_ACCESS_KEY_ID`/`OSS_ACCESS_KEY_SECRET` (optional OSS image storage; all-or-nothing).
 
 ## Architecture
 
@@ -59,11 +59,12 @@ Schema changes require `pnpm db:generate` to produce a migration in `lib/db/migr
 
 - `bailian.ts` — DashScope async text-to-image client (create task with `X-DashScope-Async: enable`, poll task by id). Credentials resolve per-model (`ai_models.apiKey`/`apiBase`) with env fallback (`DASHSCOPE_API_KEY`/`DASHSCOPE_BASE_URL`).
 - `credits.ts` — `deductCredits`/`addCredits` run inside a transaction with `SELECT ... FOR UPDATE` on the team row; never mutate `teams.creditBalance` directly. Every balance change writes a `credit_transactions` ledger row (append-only). Also holds `CREDIT_PACKS` and `SIGNUP_BONUS_CREDITS`.
-- `generations.ts` — orchestration: create (validate → insert → deduct → submit; refund on submit failure), sync (poll; on success download images to `public/generated/` because provider URLs expire in ~24h; on failure refund), list, delete (detach ledger rows, remove local files, cascade DB rows).
+- `generations.ts` — orchestration: create (validate → insert → deduct → submit; refund on submit failure), sync (poll; on success persist images via `storage.ts` because provider URLs expire in ~24h; on failure refund), list, delete (detach ledger rows, remove stored images, cascade DB rows).
+- `storage.ts` — image storage adapter: `storeImage` downloads the provider image once, then uploads to Alibaba Cloud OSS (key `ai-studio/generated/{id}/{uuid}.{ext}`, returns full public URL) when all four `OSS_*` env vars are set, or writes to `public/generated/` (returns `/generated/...`) when none are set; partial config throws. `deleteStoredImage` branches on whether the stored value starts with `http` (OSS delete, origin-checked) or not (local unlink). Best-effort deletes — never throw from cleanup paths.
 - Generation flow is server-polled: `GET /api/ai/generations` syncs all unfinished team tasks before returning; the Studio/Gallery SWR clients just re-fetch on an interval while tasks are pending/running.
 - Credit packs are one-time Stripe Checkouts (`mode: 'payment'`, `metadata.type='credit_pack'`); the webhook's `checkout.session.completed` handler `handleCreditPackCheckout` is idempotent via `stripeSessionId`.
 - Admin: `lib/auth/admin.ts` (`isAdminUser` checks `ADMIN_EMAILS`). Always guard admin actions/routes with it. Never expose `ai_models.apiKey` to the client (admin page selects `hasCustomKey: Boolean(apiKey)`).
-- Generated images live on the local filesystem — fine for dev; serverless deployments need `downloadImage` swapped for object-storage upload.
+- Generated images go to Alibaba Cloud OSS when the `OSS_*` env vars are configured (bucket must be public-read; `generation_images.localPath` then holds the full URL); otherwise they fall back to the local filesystem (`public/generated/`) — fine for dev only, serverless deployments must configure OSS. `ali-oss` is listed in `next.config.ts` `serverExternalPackages`; keep all storage logic behind `lib/ai/storage.ts`.
 
 ### Activity logging
 
