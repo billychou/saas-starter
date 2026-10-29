@@ -9,10 +9,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['ali-oss'],
   turbopack: {
     root: path.join(__dirname)
-  },
-  experimental: {
-    ppr: true,
-    clientSegmentCache: true
   }
 };
 

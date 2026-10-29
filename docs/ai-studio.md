@@ -60,7 +60,7 @@ credit_transactions        # 积分流水账本（只增不改）
 | `/api/ai/models` | GET | 启用中的模型（**不含 apiKey**）+ `creditBalance` + `creditPacks` |
 | `/api/user` | GET | 响应新增 `isAdmin` 字段（Header 显示管理入口用） |
 
-均通过 `getUser()`/`getTeamForUser()` 自行鉴权（middleware matcher 不覆盖 `/api/*`）；页面路由 `/studio` `/gallery` `/admin` 已加入 `middleware.ts` 的 `protectedRoutes`。
+均通过 `getUser()`/`getTeamForUser()` 自行鉴权（proxy matcher 不覆盖 `/api/*`）；页面路由 `/studio` `/gallery` `/admin` 已加入 `proxy.ts` 的 `protectedRoutes`。
 
 ## 5. Stripe 积分包
 
@@ -108,7 +108,7 @@ OSS_PUBLIC_BASE_URL=https://cdn.example.com         # 可选：自定义/CDN 域
 
 - ✅ `pnpm build` 通过，20 条路由（新增 `/studio` `/gallery` `/admin/models` + 4 条 `/api/ai/*`）
 - ✅ `pnpm db:migrate` 应用迁移；开发库已注入 3 个默认百炼模型（wanx2.1-t2i-turbo/plus、flux-schnell）
-- ✅ 未登录访问 `/studio` → 307 `/sign-in`（middleware 保护生效）
+- ✅ 未登录访问 `/studio` → 307 `/sign-in`（proxy 保护生效）
 - ✅ `/studio` `/gallery` `/admin/models` 中英文渲染抽查通过（`NEXT_LOCALE=zh`）
 - ✅ 端到端失败路径：未配置 API Key 时 POST `/api/ai/generate` → 扣 1 分 → 提交失败 → 自动退款 → 余额还原，记录标记 failed 并带错误信息
 - ✅ DELETE `/api/ai/generations/[id]`：保留积分流水（generationId 置空）、删除本地图片文件、级联删 images 行
