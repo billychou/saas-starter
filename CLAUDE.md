@@ -30,12 +30,12 @@ Env lives in `.env` (not `.env.local`) — see `.env.example` for format. Key va
 
 - `app/(dashboard)/` — logged-in area: marketing landing page (`page.tsx`), `/pricing` (Stripe Checkout), nested `/dashboard/*` pages (general, security, activity) which support team member CRUD and settings, plus AI pages: `/studio` (generation workbench), `/gallery` (team gallery), `/admin/models` (admin-only model CRUD, Server Actions in `app/(dashboard)/admin/actions.ts`).
 - `app/(login)/` — `/sign-in` and `/sign-up` pages; shared client component `app/(login)/login.tsx` and Server Actions in `app/(login)/actions.ts`.
-- `app/api/` — REST routes: `/api/user` (includes `isAdmin`), `/api/team`, `/api/stripe/checkout`, `/api/stripe/webhook`, `/api/ai/generate`, `/api/ai/generations[/{id}]`, `/api/ai/models`. API routes are outside the middleware matcher — they authenticate via `getUser()`/`getTeamForUser()` themselves.
-- Protected page prefixes are listed in `middleware.ts` (`protectedRoutes` array) — add new logged-in routes there.
+- `app/api/` — REST routes: `/api/user` (includes `isAdmin`), `/api/team`, `/api/stripe/checkout`, `/api/stripe/webhook`, `/api/ai/generate`, `/api/ai/generations[/{id}]`, `/api/ai/models`. API routes are outside the proxy matcher — they authenticate via `getUser()`/`getTeamForUser()` themselves.
+- Protected page prefixes are listed in `proxy.ts` (`protectedRoutes` array) — add new logged-in routes there.
 
-### Authentication (two layers of middleware)
+### Authentication (global proxy + action-level middleware)
 
-1. **Global**: root `middleware.ts` runs on all non-API/static routes. Redirects unauthenticated users away from `/dashboard`, and refreshes the JWT `session` cookie (jose, HS256, 1-day expiry) on GET requests. Session helpers (`signToken`, `verifyToken`, `getSession`, `setSession`, password hashing) are in `lib/auth/session.ts`.
+1. **Global**: root `proxy.ts` (Next 16 proxy convention, Node.js runtime) runs on all non-API/static routes. Redirects unauthenticated users away from `/dashboard`, and refreshes the JWT `session` cookie (jose, HS256, 1-day expiry) on GET requests. Session helpers (`signToken`, `verifyToken`, `getSession`, `setSession`, password hashing) are in `lib/auth/session.ts`.
 2. **Action-level**: `lib/auth/middleware.ts` provides wrappers for Server Actions — `validatedAction` (Zod schema validation of FormData), `validatedActionWithUser` (also requires authenticated user), and `withTeam` (requires user + their team). Use these instead of hand-rolling checks in actions.
 
 Auth is cookie-based JWT, no external auth provider. RBAC: users have a global `role` ('owner' | 'member') and per-team roles via `team_members`.

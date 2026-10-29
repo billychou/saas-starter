@@ -40,7 +40,7 @@
 
 - `app/layout.tsx`：`<head>` 内联防闪烁脚本 —— 读取 `localStorage.theme`，无值时跟随 `prefers-color-scheme`，在 hydration 前给 `<html>` 加 `dark` class；`<html>` 加 `suppressHydrationWarning`
 - 新增 `components/theme-toggle.tsx`（客户端组件）：Sun/Moon 图标切换，写入 `localStorage('theme')`；初始图标在 `useEffect` 中确定，避免 hydration mismatch
-- 与根 `middleware.ts` 的 session 刷新逻辑无冲突（主题纯客户端）
+- 与根 `proxy.ts` 的 session 刷新逻辑无冲突（主题纯客户端）
 
 ### 2.3 字体
 
@@ -144,7 +144,7 @@
 
 ## 5. 未改动（明确声明）
 
-- 所有 Server Actions、鉴权（`lib/auth/*`）、Stripe（`lib/payments/*`）、数据库层（`lib/db/*`）、API 路由、`middleware.ts`
+- 所有 Server Actions、鉴权（`lib/auth/*`）、Stripe（`lib/payments/*`）、数据库层（`lib/db/*`）、API 路由、`proxy.ts`
 - SWR 数据流（`/api/user`、`/api/team` fallback 机制）
 - 未新增任何 npm 依赖（Accordion/Badge 复用已有的 `radix-ui` 统一包与 `class-variance-authority`）
 
